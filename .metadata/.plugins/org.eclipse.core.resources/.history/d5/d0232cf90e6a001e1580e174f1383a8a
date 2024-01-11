@@ -1,0 +1,59 @@
+package service.broker;
+
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Executors;
+
+import com.sun.net.httpserver.HttpContext;
+import com.sun.net.httpserver.HttpServer;
+
+import javax.jmdns.JmDNS;
+import javax.jmdns.ServiceEvent;
+import javax.jmdns.ServiceListener;
+import javax.xml.namespace.QName;
+import javax.xml.ws.Endpoint;
+import javax.xml.ws.Service;
+
+import service.core.ClientInfo;
+import service.core.Quotation;
+import service.core.QuotationService;
+
+public class BrokerMain {
+
+	private static ClientInfo info;
+
+	public static void main(String[] args) {
+
+		/*List<String> quotationUrls = new ArrayList<>();
+
+		for (String arg : args) {
+			quotationUrls.add(arg);
+		}*/
+		LocalBrokerService localBrokerService = new LocalBrokerService();
+
+		String host = "localhost";
+		if (args.length > 0) {
+			host = args[0];
+		}
+		 try {
+	            Endpoint endpoint = Endpoint.create(new LocalBrokerService());
+	            HttpServer server = HttpServer.create(new InetSocketAddress(9000), 5);
+	            server.setExecutor(Executors.newFixedThreadPool(5));
+	            HttpContext context = server.createContext("/broker");
+	            endpoint.publish(context);
+	            server.start();
+	            //Create a JmDNS instance
+	            JmDNS jmdns = JmDNS.create(host);
+	            System.out.println("on host " + jmdns.getInetAddress());
+	            // Add service listener
+	            jmdns.addServiceListener("_quote._tcp.local.", new LocalBrokerService());
+	            System.out.println("broker is running");
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	        }
+	}
+	
